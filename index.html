@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北京中关村学院 - 新生打卡小游戏</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 结算画面 -->
+    <div id="settlement-overlay">
+        <div class="close-btn" onclick="closeSettlement()"></div>
+        <div class="settlement-card">
+            <div class="settlement-img-box">
+                <img id="settlement-img" src="" alt="场景图片">
+            </div>
+            <div id="settlement-title-chs" class="settlement-title-chs">加载中...</div>
+            <div id="settlement-title-en" class="settlement-title-en">LOADING...</div>
+        </div>
+        <div id="settlement-desc" class="settlement-desc">这里是成就描述文字。</div>
+    </div>
+
+    <!-- 场景选择界面 -->
+    <div id="scene-selection">
+        <!-- 用户信息栏 -->
+        <div id="user-info-bar" class="user-info-bar" style="display: none;">
+            <div class="info-item">
+                <span class="info-label">准考证号:</span>
+                <span id="display-userid" class="info-value">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">通关状态:</span>
+                <span id="display-status" class="info-value">--</span>
+            </div>
+        </div>
+        <h1 id="selection-title">加载中...</h1>
+        <div id="scene-grid" class="scene-grid"></div>
+    </div>
+
+    <!-- 游戏界面 -->
+    <div id="game-wrapper">
+        <h1 id="game-title">加载中...</h1>
+        <div class="game-container"><div class="board" id="board"></div></div>
+        <div class="win-msg" id="win-msg"></div>
+        
+        <!-- 标准游戏控制按钮 -->
+        <div id="game-controls" class="controls">
+            <button id="hint-btn" onclick="provideHint()">提示</button>
+            <button onclick="backToSelection()">返回选择</button>
+        </div>
+
+        <!-- 已通关浏览控制按钮 -->
+        <div id="solved-controls" class="controls" style="display: none;">
+            <button id="replay-btn" onclick="replayGame()">重玩</button>
+            <button id="info-btn" onclick="showSettlement()">打卡点信息</button>
+            <button onclick="backToSelection()">返回选择</button>
+        </div>
+    </div>
+
+    <!-- 引入核心解题算法 -->
+    <script src="solver.js?v=20260122_v1"></script>
+    <!-- 引入游戏逻辑脚本 -->
+    <script src="script.js?v=20260122_v1"></script>
+</body>
+</html>
