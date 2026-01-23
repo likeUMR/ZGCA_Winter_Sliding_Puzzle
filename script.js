@@ -9,7 +9,7 @@ const GAME_CONFIG = {
         1: { maxSteps: 100, targetChaos: 10, caocaoWeight: 5 },
         2: { maxSteps: 400, targetChaos: 50, caocaoWeight: 10 },
         3: { maxSteps: 1000, targetChaos: 100, caocaoWeight: 20 },
-        4: { maxSteps: 3000, targetChaos: 300, caocaoWeight: 80 } // 原最高难度 { maxSteps: 4000, targetChaos: 350, caocaoWeight: 100 }
+        4: { maxSteps: 1500, targetChaos: 150, caocaoWeight: 50 } // 原最高难度 { maxSteps: 4000, targetChaos: 350, caocaoWeight: 100 }
     },
     api: {
         baseUrl: "https://leaderboard.liruochen.cn",
@@ -22,7 +22,6 @@ const sceneGrid = document.getElementById('scene-grid');
 const gameWrapper = document.getElementById('game-wrapper');
 const boardElement = document.getElementById('board');
 const winMsgElement = document.getElementById('win-msg');
-const hintBtn = document.getElementById('hint-btn');
 const selectionTitle = document.getElementById('selection-title');
 const gameTitle = document.getElementById('game-title');
 const gameControls = document.getElementById('game-controls');
@@ -200,8 +199,6 @@ const targetLayoutScene3 = [
 let pieces = [];
 let grid = [];
 let isGameOver = false;
-let hintCooldownTimer = null;
-let hintCooldownRemaining = 0;
 
 async function init() {
     // 重新根据当前 userid 加载本地进度
@@ -338,12 +335,6 @@ function enterChallengeMode() {
     gameControls.style.display = 'flex';
     solvedControls.style.display = 'none';
     
-    // 重置提示冷却
-    if (hintCooldownTimer) clearInterval(hintCooldownTimer);
-    hintCooldownTimer = null;
-    hintCooldownRemaining = 0;
-    updateHintBtnState();
-    
     autoShuffle();
 }
 
@@ -434,7 +425,6 @@ function tryMove(p, dx, dy, isShuffling = false) {
 
 async function autoShuffle() {
     isGameOver = true; 
-    updateHintBtnState();
     winMsgElement.innerText = "智能生成局面中...";
     pieces.forEach(p => { const el = document.getElementById(p.id); if (el) el.classList.add('no-transition'); });
     
@@ -473,7 +463,6 @@ async function autoShuffle() {
     }
     pieces = JSON.parse(bestState); render(); updateGrid();
     isGameOver = false; 
-    updateHintBtnState();
     winMsgElement.innerText = "";
 }
 
@@ -498,7 +487,6 @@ function checkWin() {
     const isWin = pieces.filter(p => !p.type.includes('dummy')).every(p => p.x === p.targetX && p.y === p.targetY);
     if (isWin) {
         isGameOver = true; winMsgElement.innerText = "完美拼合！";
-        updateHintBtnState();
         if (!solvedLevels.includes(currentImageId)) {
             solvedLevels.push(currentImageId);
             localStorage.setItem(getStorageKey(), JSON.stringify(solvedLevels));
@@ -556,79 +544,6 @@ function closeSettlement() {
             backToSelection(); 
         }
     }, 500);
-}
-
-async function provideHint() {
-    if (isGameOver || hintCooldownRemaining > 0) return;
-    
-    hintBtn.disabled = true;
-    const oldText = hintBtn.innerText;
-    winMsgElement.innerText = "专家正在思考...";
-
-    // 异步运行求解器，防止阻塞 UI 线程
-    // 增加一点点延迟让“专家正在思考”能显示出来
-    await new Promise(r => setTimeout(r, 50));
-
-    // 根据场景 ID 获取对应的目标布局
-    let currentTarget;
-    if (currentImageId === 1) currentTarget = targetLayoutScene1;
-    else if (currentImageId === 2) currentTarget = targetLayoutScene2;
-    else if (currentImageId === 7) currentTarget = targetLayoutScene3;
-    else currentTarget = targetLayout;
-
-    const bestStep = HuarongSolver.findNextStep(pieces, currentTarget, (progress) => {
-        winMsgElement.innerText = `专家思考中: ${progress}%`;
-    });
-
-    winMsgElement.innerText = "";
-    
-    if (bestStep) {
-        const el = document.getElementById(bestStep.pieceId);
-        const piece = pieces.find(p => p.id === bestStep.pieceId);
-        el.classList.add('hint-highlight');
-        setTimeout(() => {
-            el.classList.remove('hint-highlight');
-            tryMove(piece, bestStep.dx, bestStep.dy);
-        }, 400);
-        // 成功获取提示后，开始冷却
-        startHintCooldown();
-    } else {
-        alert("当前的局面太复杂，专家也看走眼了，请尝试复原！");
-        updateHintBtnState();
-    }
-}
-
-function startHintCooldown() {
-    hintCooldownRemaining = 30;
-    updateHintBtnState();
-    
-    if (hintCooldownTimer) clearInterval(hintCooldownTimer);
-    
-    hintCooldownTimer = setInterval(() => {
-        hintCooldownRemaining--;
-        if (hintCooldownRemaining <= 0) {
-            clearInterval(hintCooldownTimer);
-            hintCooldownTimer = null;
-            hintCooldownRemaining = 0;
-        }
-        updateHintBtnState();
-    }, 1000);
-}
-
-function updateHintBtnState() {
-    if (isGameOver) {
-        hintBtn.disabled = true;
-        hintBtn.innerText = "提示";
-        return;
-    }
-    
-    if (hintCooldownRemaining > 0) {
-        hintBtn.disabled = true;
-        hintBtn.innerText = `${hintCooldownRemaining}秒后使用`;
-    } else {
-        hintBtn.disabled = false;
-        hintBtn.innerText = "提示";
-    }
 }
 
 init();

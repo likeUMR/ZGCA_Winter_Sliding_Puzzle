@@ -216,11 +216,6 @@ h1 { margin: 20px 0 10px; color: #222; letter-spacing: 2px; text-shadow: 1px 1px
     touch-action: none;
 }
 
-.piece.hint-highlight {
-    filter: brightness(1.6) saturate(1.4);
-    z-index: 10;
-}
-
 .piece:active { filter: brightness(1.05); transform: translateY(1px); }
 .piece.no-transition { transition: none !important; }
 .piece.dummy-h {
