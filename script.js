@@ -34,7 +34,15 @@ let CELL_SIZE = 80;
 let currentImageId = 1;
 let achievementData = null; 
 
-let solvedLevels = JSON.parse(localStorage.getItem('sliding_puzzle_solved') || '[]');
+/**
+ * 获取本地存储的键名，包含用户 ID 以区分不同用户的进度
+ */
+function getStorageKey() {
+    const userId = getUserId();
+    return userId ? `sliding_puzzle_solved_${userId}` : 'sliding_puzzle_solved';
+}
+
+let solvedLevels = JSON.parse(localStorage.getItem(getStorageKey()) || '[]');
 
 /**
  * 从 URL 获取玩家 ID (user_id 或 userid)
@@ -107,7 +115,7 @@ async function syncWithCloud() {
     }
     
     // 更新本地缓存
-    localStorage.setItem('sliding_puzzle_solved', JSON.stringify(solvedLevels));
+    localStorage.setItem(getStorageKey(), JSON.stringify(solvedLevels));
 }
 
 /**
@@ -266,7 +274,7 @@ function renderSceneSelection() {
 
 function clearProgress() {
     if (confirm("确定要清除所有通关进度吗？(此操作不可恢复)")) {
-        localStorage.removeItem('sliding_puzzle_solved');
+        localStorage.removeItem(getStorageKey());
         location.reload();
     }
 }
@@ -490,7 +498,7 @@ function checkWin() {
         updateHintBtnState();
         if (!solvedLevels.includes(currentImageId)) {
             solvedLevels.push(currentImageId);
-            localStorage.setItem('sliding_puzzle_solved', JSON.stringify(solvedLevels));
+            localStorage.setItem(getStorageKey(), JSON.stringify(solvedLevels));
             
             // 检查是否所有打卡点都已完成
             const sceneMapping = [1, 2, 7, 4];
