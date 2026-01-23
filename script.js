@@ -7,9 +7,9 @@ const GAME_CONFIG = {
     // 难度配置：现分为 1-4 级
     difficultySettings: {
         1: { maxSteps: 100, targetChaos: 10, caocaoWeight: 5 },
-        2: { maxSteps: 400, targetChaos: 50, caocaoWeight: 10 },
+        2: { maxSteps: 600, targetChaos: 60, caocaoWeight: 10 },
         3: { maxSteps: 1000, targetChaos: 100, caocaoWeight: 20 },
-        4: { maxSteps: 1500, targetChaos: 150, caocaoWeight: 50 } // 原最高难度 { maxSteps: 4000, targetChaos: 350, caocaoWeight: 100 }
+        4: { maxSteps: 1800, targetChaos: 180, caocaoWeight: 50 } // 原最高难度 { maxSteps: 4000, targetChaos: 350, caocaoWeight: 100 }
     },
     api: {
         baseUrl: "https://leaderboard.liruochen.cn",
