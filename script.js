@@ -42,7 +42,7 @@ function getStorageKey() {
     return userId ? `sliding_puzzle_solved_${userId}` : 'sliding_puzzle_solved';
 }
 
-let solvedLevels = JSON.parse(localStorage.getItem(getStorageKey()) || '[]');
+let solvedLevels = [];
 
 /**
  * 从 URL 获取玩家 ID (user_id 或 userid)
@@ -204,6 +204,9 @@ let hintCooldownTimer = null;
 let hintCooldownRemaining = 0;
 
 async function init() {
+    // 重新根据当前 userid 加载本地进度
+    solvedLevels = JSON.parse(localStorage.getItem(getStorageKey()) || '[]');
+
     // 优先同步云端数据
     await syncWithCloud();
 
