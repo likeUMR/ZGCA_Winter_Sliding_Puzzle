@@ -13,6 +13,7 @@ const GAME_CONFIG = {
     },
     api: {
         baseUrl: "https://leaderboard.liruochen.cn",
+        campaignId: "zgca-admission",
         gameId: "zgca-sliding-puzzle"
     }
 };
@@ -44,11 +45,34 @@ function getStorageKey() {
 let solvedLevels = [];
 
 /**
- * 从 URL 获取玩家 ID (user_id 或 userid)
+ * 从 URL 获取玩家 ID（仅使用 user_id）
  */
 function getUserId() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('user_id') || params.get('userid');
+    return params.get('user_id');
+}
+
+async function postAdmissionApi(path) {
+    const userId = getUserId();
+    if (!userId) {
+        return null;
+    }
+
+    const response = await fetch(`${GAME_CONFIG.api.baseUrl}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            campaign_id: GAME_CONFIG.api.campaignId,
+            game_id: GAME_CONFIG.api.gameId,
+            user_id: userId
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+    }
+
+    return response.json();
 }
 
 /**
@@ -86,28 +110,15 @@ async function syncWithCloud() {
     if (!userId) return;
 
     try {
-        const response = await fetch(`${GAME_CONFIG.api.baseUrl}/api/player_score`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                game_id: GAME_CONFIG.api.gameId,
-                user_id: userId,
-                field_id: 'clear_time'
-            })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            // 如果有成绩（score），说明整个游戏已通关
-            if (data && data.score) {
-                // 标记所有打卡点为已通关
-                const sceneMapping = [1, 2, 7, 4];
-                sceneMapping.forEach(picId => {
-                    if (!solvedLevels.includes(picId)) {
-                        solvedLevels.push(picId);
-                    }
-                });
-            }
+        const data = await postAdmissionApi('/api/admission/game_status');
+        if (data && data.cleared) {
+            // 如果 admission 状态已通关，则将全部打卡点标记为已完成。
+            const sceneMapping = [1, 2, 7, 4];
+            sceneMapping.forEach(picId => {
+                if (!solvedLevels.includes(picId)) {
+                    solvedLevels.push(picId);
+                }
+            });
         }
     } catch (e) {
         console.error(`同步云端状态失败:`, e);
@@ -125,14 +136,13 @@ async function uploadRecord() {
     if (!userId) return;
 
     try {
-        const response = await fetch(`${GAME_CONFIG.api.baseUrl}/api/upload`, {
+        const response = await fetch(`${GAME_CONFIG.api.baseUrl}/api/admission/register_clear`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                campaign_id: GAME_CONFIG.api.campaignId,
                 game_id: GAME_CONFIG.api.gameId,
-                user_id: userId,
-                score: 1, // 通关分数为 1
-                field_id: 'clear_time'
+                user_id: userId
             })
         });
 
@@ -201,7 +211,7 @@ let grid = [];
 let isGameOver = false;
 
 async function init() {
-    // 重新根据当前 userid 加载本地进度
+    // 重新根据当前 user_id 加载本地进度
     solvedLevels = JSON.parse(localStorage.getItem(getStorageKey()) || '[]');
 
     // 优先同步云端数据
